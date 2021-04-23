@@ -79,24 +79,24 @@ long insert_total_num = 0;
  * 0x0001   | 1024.000 GiB      | 0.000 GiB
  *
  */
-void set_affinity(uint32_t idx)
-{
-  cpu_set_t my_set;
-  CPU_ZERO(&my_set);
-  if (idx < 18)
-  {
-    CPU_SET(idx, &my_set);
-    // printf("set affinity %u\n", idx);
-  }
-  else if(idx <36)
-  {
-    CPU_SET(idx + 18, &my_set);
-    // printf("set affinity %u\n", idx + 18);
-  }
-  if (sched_setaffinity(0, sizeof(cpu_set_t), &my_set))
-  {
-    printf("set affinity failed\n");
-  };
+void set_affinity(uint32_t idx) {
+    assert(idx <= 72);
+    cpu_set_t my_set;
+    CPU_ZERO(&my_set);
+    int ret = 0;
+
+    if (idx < 18 || idx >= 54) {
+        CPU_SET(idx, &my_set);
+        // printf("set affinity %u\n", idx);
+    } else if (idx < 36) {
+        CPU_SET(idx + 18, &my_set);
+        // printf("set affinity %u\n", idx + 18);
+    } else if (idx < 54) {
+        CPU_SET(idx - 18, &my_set);
+        // printf("set affinity %u\n", idx - 18);
+    }
+    ret = sched_setaffinity(0, sizeof(cpu_set_t), &my_set);
+    assert(ret == 0);
 }
 
 
@@ -214,7 +214,6 @@ void *running(void *in)
       key->length=KEY_LEN;
       memcpy(key->key,input->t->entries[i].key,sizeof(input->t->entries[i].key));
       const char*value=input->index->Get(key);
-
     } else if (input->t->entries[i].op == INSERT) {
       //得到key的地址
       PMEMoid  kptr;

@@ -394,7 +394,7 @@ struct Bucket {
 #ifdef PMEM
     Allocator::Persist(&_[index], sizeof(_[index]));
 #endif
-    set_hash(index, meta_hash, true);
+    set_hash(index, meta_hash, false);
   }
 
   /*if delete success, then return 0, else return -1*/
