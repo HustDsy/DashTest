@@ -394,8 +394,19 @@ struct Bucket {
     set_hash(slot, meta_hash, probe);
     return 0;
   }
+
   void delete_with_index(int index) {
     unset_hash(index, false);
+  }
+
+  //新增函数，根据位置插入数据一定会成功,probe一定是true
+  void insert_with_index(T key,Value_t value,uint8_t meta_hash,int index) {
+    _[index].value = value;
+    _[index].key = key;
+#ifdef PMEM
+    Allocator::Persist(&_[index], sizeof(_[index]));
+#endif
+    set_hash(index, meta_hash, false);
   }
 
   /*if delete success, then return 0, else return -1*/

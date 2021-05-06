@@ -78,23 +78,24 @@ long insert_total_num = 0;
  *
  */
 void set_affinity(uint32_t idx) {
-  assert(idx <= 72);
-  cpu_set_t my_set;
-  CPU_ZERO(&my_set);
-  int ret = 0;
+    assert(idx <= 72);
+    cpu_set_t my_set;
+    CPU_ZERO(&my_set);
+    int ret = 0;
 
-  if (idx < 18 || idx >= 54) {
-    CPU_SET(idx, &my_set);
-    // printf("set affinity %u\n", idx);
-  } else if (idx < 36) {
-    CPU_SET(idx + 18, &my_set);
-    // printf("set affinity %u\n", idx + 18);
-  } else if (idx < 54) {
-    CPU_SET(idx - 18, &my_set);
-    // printf("set affinity %u\n", idx - 18);
-  }
-  ret = sched_setaffinity(0, sizeof(cpu_set_t), &my_set);
-  assert(ret == 0);
+    if (idx < 18 || idx >= 54) {
+        CPU_SET(idx, &my_set);
+        // printf("set affinity %u\n", idx);
+    } else if (idx < 36) {
+        CPU_SET(idx + 18, &my_set);
+        // printf("set affinity %u\n", idx + 18);
+    } else if (idx < 54) {
+        CPU_SET(idx - 18, &my_set);
+        // printf("set affinity %u\n", idx - 18);
+    }
+    ret = sched_setaffinity(0, sizeof(cpu_set_t), &my_set);
+    assert(ret == 0);
+
 }
 
 void read_input_files(const char *path, task *t,
@@ -211,10 +212,18 @@ void *running(void *in) {
 
   for (int i = 0; i < input->t->size; i++) {
     if (input->t->entries[i].op == READ) {
+<<<<<<< HEAD
       //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò³ï¿½keyï¿½ï¿½valueï¿½ï¿½ï¿½ï¿½
       memcpy(key->key, input->t->entries[i].key,
              sizeof(input->t->entries[i].key));
       value = input->index->Get(key, true);
+=======
+      //ÕâÀï²éÕÒ³ökeyºÍvalue¼´¿É
+      string_key*key=reinterpret_cast<string_key*>(alloca(sizeof(string_key)+KEY_LEN));
+      key->length=KEY_LEN;
+      memcpy(key->key,input->t->entries[i].key,sizeof(input->t->entries[i].key));
+      const char*value=input->index->Get(key);
+>>>>>>> eb544971fb6d2a4b292ed61cebb46a151ed2f520
     } else if (input->t->entries[i].op == INSERT) {
       //ï¿½Ãµï¿½keyï¿½Äµï¿½Ö·
       PMEMoid kptr;
