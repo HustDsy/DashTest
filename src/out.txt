@@ -1,0 +1,60 @@
+workload:workloade
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):281132795
+------------------------------------------------------------
+workload:workloade
+thread_num:36
+mode:run
+ycsb read keylen error:0, ycsb insert keylen error:5499, read total num:0, insert total num:499994501
+timeuse(us):289841840
+------------------------------------------------------------
+workload:workloade
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):285572501
+------------------------------------------------------------
+workload:workloade
+thread_num:32
+mode:run
+ycsb read keylen error:0, ycsb insert keylen error:5499, read total num:0, insert total num:499994501
+timeuse(us):278911101
+------------------------------------------------------------
+workload:workloade
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):284510752
+------------------------------------------------------------
+workload:workloade
+thread_num:16
+mode:run
+ycsb read keylen error:0, ycsb insert keylen error:5499, read total num:0, insert total num:499994501
+timeuse(us):270042295
+------------------------------------------------------------
+workload:workloade
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):282973477
+------------------------------------------------------------
+workload:workloade
+thread_num:8
+mode:run
+ycsb read keylen error:0, ycsb insert keylen error:5499, read total num:0, insert total num:499994501
+timeuse(us):408245442
+------------------------------------------------------------
+workload:workloade
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):283611404
+------------------------------------------------------------
+workload:workloade
+thread_num:4
+mode:run
+ycsb read keylen error:0, ycsb insert keylen error:5499, read total num:0, insert total num:499994501
+timeuse(us):723842604
+------------------------------------------------------------

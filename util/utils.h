@@ -3,7 +3,6 @@
 // Licensed under the MIT license.
 #pragma once
 
-
 #include <immintrin.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -31,7 +30,7 @@ static bool FileExists(const char *pool_path) {
 
 #define LOG_FATAL(msg)      \
   std::cout << msg << "\n"; \
-  exit(-1)
+  //exit(-1)
 
 #define LOG(msg) std::cout << msg << "\n"
 

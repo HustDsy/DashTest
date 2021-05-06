@@ -75,14 +75,14 @@ struct Allocator {
     TX_END
   }
 
-  static void Allocate(PMEMoid* pm_ptr, uint32_t alignment, size_t size,
+  static void  Allocate(PMEMoid* pm_ptr, uint32_t alignment, size_t size,
                        int (*alloc_constr)(PMEMobjpool* pool, void* ptr,
                                            void* arg),
                        void* arg) {
     auto ret = pmemobj_alloc(instance_->pm_pool_, pm_ptr, size,
                              TOID_TYPE_NUM(char), alloc_constr, arg);
     if (ret) {
-      LOG_FATAL("Allocate: Allocation Error in PMEMoid");
+      //LOG_FATAL("Allocate: Allocation Error in PMEMoid");
     }
   }
 

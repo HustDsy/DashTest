@@ -63,9 +63,9 @@ const constexpr size_t kNumBucket =
 constexpr size_t stashBucket =
     2; /* the number of stash buckets in one segment*/
 constexpr int allocMask = (1 << kNumPairPerBucket) - 1;
-constexpr size_t bucketMask = ((1 << (int)log2(kNumBucket)) - 1);
-constexpr size_t stashMask = (1 << (int)log2(stashBucket)) - 1;
-constexpr uint8_t stashHighMask = ~((uint8_t)stashMask);
+size_t bucketMask = ((1 << (int)log2(kNumBucket)) - 1);
+size_t stashMask = (1 << (int)log2(stashBucket)) - 1;
+ uint8_t stashHighMask = ~((uint8_t)stashMask);
 
 #define BUCKET_INDEX(hash) ((hash >> kFingerBits) & bucketMask)
 #define GET_COUNT(var) ((var)&countMask)
@@ -179,19 +179,17 @@ struct Bucket {
 
   int unique_check(uint8_t meta_hash, T key, Bucket<T> *neighbor,
                    Bucket<T> *stash) {
-    //是否在target桶
     Value_t var=check_and_get(meta_hash, key, false);
     if(var!=NONE) {
-        Delete(key,meta_hash,false);
-        Insert(key,var,meta_hash,false);
-        return -1;
+      //Delete(key,meta_hash, false);
+     // Insert(key,var,meta_hash,false);
+      return -1;
     }
-
-    //是否在neighbor桶
     var=neighbor->check_and_get(meta_hash, key, true);
     if(var!=NONE) {
-      neighbor->Delete(key,meta_hash,true);
-      neighbor->Insert(key,var,meta_hash,true);
+     // neighbor->Delete(key,meta_hash, true);
+      //neighbor->Insert(key,var,meta_hash,true);
+      return -1;
     }
 
     if (test_stash_check()) {
@@ -227,11 +225,9 @@ struct Bucket {
         for (int i = 0; i < stashBucket; ++i) {
           Bucket *curr_bucket = stash + i;
           var=curr_bucket->check_and_get(meta_hash, key, false);
-          if ( var!= NONE) {
-            //删除对应的key即可
-            curr_bucket->Delete(key,meta_hash, false);
-            //然后再插入新key和value,默认为var
-            curr_bucket->Insert(key,var,meta_hash, false);
+          if(var!= NONE) {
+            //curr_bucket->Delete(key,meta_hash, false);
+            //curr_bucket->Insert(key,var,meta_hash,false);
             return -1;
           }
         }
@@ -248,6 +244,7 @@ struct Bucket {
   Value_t check_and_get(uint8_t meta_hash, T key, bool probe) {
     int mask = 0;
     SSE_CMP8(finger_array, meta_hash);
+    int dul=_mm_popcnt_u32(mask);
     if (!probe) {
       mask = mask & GET_BITMAP(bitmap) & (~GET_MEMBER(bitmap));
     } else {
@@ -373,6 +370,16 @@ struct Bucket {
     return (old_version != value);
   }
 
+  int insert_with_slot(int index,T key, Value_t value, uint8_t meta_hash, bool probe) {
+    _[index].value = value;
+    _[index].key = key;
+#ifdef PMEM
+    Allocator::Persist(&_[index], sizeof(_[index]));
+#endif
+    set_hash(index, meta_hash, probe);
+    return 0;
+  }
+
   int Insert(T key, Value_t value, uint8_t meta_hash, bool probe) {
     auto slot = find_empty_slot();
     assert(slot < kNumPairPerBucket);
@@ -387,14 +394,8 @@ struct Bucket {
     set_hash(slot, meta_hash, probe);
     return 0;
   }
-  //新增函数，根据位置插入数据一定会成功,probe一定是true
-  void insert_with_index(T key,Value_t value,uint8_t meta_hash,int index) {
-    _[index].value = value;
-    _[index].key = key;
-#ifdef PMEM
-    Allocator::Persist(&_[index], sizeof(_[index]));
-#endif
-    set_hash(index, meta_hash, true);
+  void delete_with_index(int index) {
+    unset_hash(index, false);
   }
 
   /*if delete success, then return 0, else return -1*/
@@ -506,10 +507,6 @@ struct Bucket {
       }
     }
     return -1;
-  }
-  //新增函数，delete by slot,这里一定会成功，因为删除的时候 槽是满的
-  void  delete_with_index(int index) {
-    unset_hash(index, false);
   }
 
   int Insert_with_noflush(T key, Value_t value, uint8_t meta_hash, bool probe) {
@@ -903,8 +900,6 @@ struct Table {
       lock_bit; /* for the synchronization of the lazy recovery in one segment*/
 };
 
-
-
 /* it needs to verify whether this bucket has been deleted...*/
 template <class T>
 int Table<T>::Insert(T key, Value_t value, size_t key_hash, uint8_t meta_hash,
@@ -933,7 +928,6 @@ RETRY:
   auto ret =
       target->unique_check(meta_hash, key, neighbor, bucket + kNumBucket);
   if (ret == -1) {
-    //重复key，执行更新操作，删了再插，在unique_check中删除完毕
     neighbor->release_lock();
     target->release_lock();
     return -3; /* duplicate insert*/
@@ -983,15 +977,19 @@ RETRY:
       return -2;
     }
     ret = Stash_insert(target, neighbor, key, value, meta_hash, y & stashMask);
-
+    //if(ret==-1)表示这个stash也插不进去了
+    if(ret==-1) {
+      //在insert中随便删一个数据，然后再进行插入
+      if(GET_COUNT(target->bitmap)>14||GET_COUNT(target->bitmap)==0) {
+          int error=1;
+      }
+      target->delete_with_index(0);
+      target->insert_with_slot(0,key,value,meta_hash,false);
+    }
     stash->release_lock();
     neighbor->release_lock();
-    prev_neighbor->release_lock();
-    //都插满了，只需要在target中进行删除和插入操作了
-    int index=1;
-    target->delete_with_index(index);
-    target->insert_with_index(key,value,meta_hash,index);
     target->release_lock();
+    prev_neighbor->release_lock();
     return ret;
   }
 
@@ -1958,14 +1956,83 @@ RETRY:
     recoverTable(&dir_entry[x], key_hash, x, old_sa);
     goto RETRY;
   }
-  //桶的插入
+
   auto ret = target->Insert(key, value, key_hash, meta_hash, &dir);
 
-  //ret=-2 代表加锁失败，重新加锁
-  if(ret==-2) goto RETRY;
-  //ret=-3 更新数据
-  //ret=-1 插满了
-  //这两项都在段中的Insert函数解决
+  if(ret == -3){ /*duplicate insert, insertion failure*/
+    return -1;
+  }
+  if(ret==-2) {
+    goto RETRY;
+  }
+  //等于-1的话 直接在那边就处理了
+
+
+//ret=-1表示需要进行扩容，我们这里直接避免这个问题！
+//  if (ret == -1) {
+//    if (!target->bucket->try_get_lock()) {
+//      goto RETRY;
+//    }
+//
+//    /*verify procedure*/
+//    auto old_sa = dir;
+//    auto x = (key_hash >> (8 * sizeof(key_hash) - old_sa->global_depth));
+//    if (reinterpret_cast<Table<T> *>(reinterpret_cast<uint64_t>(old_sa->_[x]) &
+//                                     tailMask) != target) /* verify process*/
+//    {
+//      target->bucket->release_lock();
+//      goto RETRY;
+//    }
+//
+//    auto new_b =
+//        target->Split(key_hash); /* also needs the verify..., and we use try
+//                                    lock for this rather than the spin lock*/
+//    /* update directory*/
+//  REINSERT:
+//    old_sa = dir;
+//    dir_entry = old_sa->_;
+//    x = (key_hash >> (8 * sizeof(key_hash) - old_sa->global_depth));
+//    if (target->local_depth < old_sa->global_depth) {
+//      if(!try_get_directory_read_lock()){
+//        goto REINSERT;
+//      }
+//
+//      if (old_sa->version != dir->version) {
+//        // The directory has changed, thus need retry this update
+//        release_directory_read_lock();
+//        goto REINSERT;
+//      }
+//
+//      Directory_Update(old_sa, x, new_b, target);
+//      release_directory_read_lock();
+//    } else {
+//      Lock_Directory();
+//      if (old_sa->version != dir->version) {
+//        Unlock_Directory();
+//        goto REINSERT;
+//      }
+//      Directory_Doubling(x, new_b, target);
+//      Unlock_Directory();
+//    }
+//
+//    /*release the lock for the target bucket and the new bucket*/
+//    new_b->state = 0;
+//    Allocator::Persist(&new_b->state, sizeof(int));
+//    target->state = 0;
+//    Allocator::Persist(&target->state, sizeof(int));
+//
+//    Bucket<T> *curr_bucket;
+//    for (int i = 0; i < kNumBucket; ++i) {
+//      curr_bucket = target->bucket + i;
+//      curr_bucket->release_lock();
+//    }
+//    curr_bucket = new_b->bucket;
+//    curr_bucket->release_lock();
+//    goto RETRY;
+//  } else if (ret == -2) {
+//    goto RETRY;
+//  }
+
   return 0;
 }
 

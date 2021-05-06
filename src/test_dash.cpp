@@ -1,24 +1,23 @@
 //
-// Created by dsy on 2021/4/16.
+// Created by dsy on 2021/4/24.
 //
 
-#include<iostream>
-#include<fstream>
-#include<string>
 #include <gflags/gflags.h>
 #include <immintrin.h>
+#include <pthread.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include<cstdio>
-#include <atomic>
-#include<pthread.h>
 
+#include <atomic>
+#include <cstdio>
+#include <fstream>
+#include <iostream>
+#include <string>
 
 #include "Hash.h"
 #include "allocator.h"
 #include "ex_finger.h"
 #include "libpmemobj.h"
-
 
 #define READ 0
 #define INSERT 1
@@ -26,50 +25,49 @@
 #define VALUE_LEN 100
 #define HASH_SEED 0xc70697UL
 
+
 const char *pool_name = "/data/pmem0/dash";
-const size_t pool_size= 1024ul * 1024ul * 1024ul * 30ul;//30G
+const size_t pool_size = 1024ul * 1024ul * 1024ul * 20ul;  // 200G
 // Set Test Config
 std::string workload = "workloade";
 uint8_t thread_num = 72;
 std::string mode = "run";
 const char *default_path;
 
-
 struct op_entry {
-  int op;      // 0 read 1 insert
+  int op;  // 0 read 1 insert
   char key[KEY_LEN];
   char value[VALUE_LEN];
 };
 /**
- * entries:ÈÎÎñÊý×é
- * task:×î¶àsize´óÐ¡µÄÈÎÎñ
+ * entries key-value
+ * size
  */
-struct task{
+struct task {
   op_entry *entries;
   uint32_t size;
 };
 
-
 struct thread_input {
   task *t;
-  Hash<string_key*>*index;//ÊôÓÚÄÄÒ»¸öË÷Òý
+  Hash<string_key *> *index;
   uint32_t idx;
 };
 
 /**
- * ¶ÁÈ¡²Ù×÷ÎÄ¼þ£¬·â×°Êý¾Ýµ½ input ÖÐ
+ * ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½×°ï¿½ï¿½ï¿½Ýµï¿½ input ï¿½ï¿½
  * @param path
  * @param input
  */
-// Í³¼Æorigin key lenÐ¡ÓÚ20µÄÇé¿ö£¬×îÖÕ¼ÆËã½á¹ûµÄÊ±ºòÐèÒª¼õµôÕâ²¿·ÖÊý¾ÝÁ¿
+// Í³ï¿½ï¿½origin key lenÐ¡ï¿½ï¿½20ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½â²¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 long read_error_len = 0;
 long insert_error_len = 0;
-// Í³¼Æ²åÈëºÍ¶ÁÈ¡µÄycsbÊý¾Ý×ÜÁ¿
+// Í³ï¿½Æ²ï¿½ï¿½ï¿½Í¶ï¿½È¡ï¿½ï¿½ycsbï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 long read_total_num = 0;
 long insert_total_num = 0;
 
 /**
- * ¼ÙÉèËùÓÐRAM,PMEMÔÚSocket0Ö®ÉÏ£¬ÇÒÎïÀí¼Ü¹¹ÈçÏÂËùÊ¾
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½RAM,PMEMï¿½ï¿½Socket0Ö®ï¿½Ï£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾
  *  125GB DRAM 512GB(?GiB) PEMM
  *  NUMA node0 CPU(s):               0-17,36-53
  *  NUMA node1 CPU(s):               18-35,54-71
@@ -79,41 +77,39 @@ long insert_total_num = 0;
  * 0x0001   | 1024.000 GiB      | 0.000 GiB
  *
  */
-void set_affinity(uint32_t idx)
-{
+void set_affinity(uint32_t idx) {
+  assert(idx <= 72);
   cpu_set_t my_set;
   CPU_ZERO(&my_set);
-  if (idx < 18)
-  {
+  int ret = 0;
+
+  if (idx < 18 || idx >= 54) {
     CPU_SET(idx, &my_set);
     // printf("set affinity %u\n", idx);
-  }
-  else if(idx <36)
-  {
+  } else if (idx < 36) {
     CPU_SET(idx + 18, &my_set);
     // printf("set affinity %u\n", idx + 18);
+  } else if (idx < 54) {
+    CPU_SET(idx - 18, &my_set);
+    // printf("set affinity %u\n", idx - 18);
   }
-  if (sched_setaffinity(0, sizeof(cpu_set_t), &my_set))
-  {
-    printf("set affinity failed\n");
-  };
+  ret = sched_setaffinity(0, sizeof(cpu_set_t), &my_set);
+  assert(ret == 0);
 }
 
-
-void read_input_files(const char *path, task *t, uint8_t t_size) // t_sizeÊÇÏß³ÌÊý
+void read_input_files(const char *path, task *t,
+                      uint8_t t_size)  // t_sizeï¿½ï¿½ï¿½ß³ï¿½ï¿½ï¿½
 {
-
-
   char buffer[1000];
   FILE *fp = fopen(path, "r");
   if (!fp) return;
 
-  //Ä³¸öÏß³Ì¶ÓÁÐµÄÎ»ÖÃ£©
-  int *cursor = static_cast<int *>(calloc(t_size, sizeof(int)));
+  //Ä³ï¿½ï¿½ï¿½ß³Ì¶ï¿½ï¿½Ðµï¿½Î»ï¿½Ã£ï¿½
+  int *cursor = reinterpret_cast<int *>(calloc(t_size, sizeof(int)));
 
   while (!feof(fp)) {
     memset(buffer, 0, sizeof(buffer));
-    fgets(buffer, sizeof(buffer), fp); // °üº¬ÁË»»ÐÐ·û
+    fgets(buffer, sizeof(buffer), fp);  // ï¿½ï¿½ï¿½ï¿½ï¿½Ë»ï¿½ï¿½Ð·ï¿½
     if (!strcmp(buffer, "insert\n")) {
       // read key
       fgets(buffer, sizeof(buffer), fp);
@@ -121,20 +117,23 @@ void read_input_files(const char *path, task *t, uint8_t t_size) // t_sizeÊÇÏß³Ì
 
       const uint32_t idx = hash_key % t_size;
 
-      // check ¶ÔÓ¦Ïß³ÌÈÎÎñ¶ÓÁÐÊÇ·ñÒÑÂú
+      // check ï¿½ï¿½Ó¦ï¿½ß³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½
       if (t[idx].size == cursor[idx]) {
-        t[idx].entries = static_cast<op_entry *>(
+        t[idx].entries = reinterpret_cast<op_entry *>(
             realloc(t[idx].entries, sizeof(struct op_entry) * t[idx].size * 2));
         t[idx].size *= 2;
       }
       // set op type
       t[idx].entries[cursor[idx]].op = INSERT;
 
-      int str_len = strlen(buffer) - 1; // ycsbÎÄ¼þÖÐÃ¿Ò»ÐÐ×îºóÓÐ»»ÐÐ·ûÐèÒª¿¼ÂÇ,ËùÒÔÍ¨¹ýstrlenº¯Êý¶Á³öÀ´µÄ³¤¶ÈÒª±ÈÕæÊµÏÔÊ¾µÄÇé¿ö+1
-      int offset = str_len - 20; // È¡Æ«ÒÆÁ¿
-      if(str_len < 20) {
+      int str_len =
+          strlen(buffer) -
+          1;  // ycsbï¿½Ä¼ï¿½ï¿½ï¿½Ã¿Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½ï¿½Ð·ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½strlenï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½ï¿½+1
+      int offset = str_len - 20;  // È¡Æ«ï¿½ï¿½ï¿½ï¿½
+      if (str_len < 20) {
         insert_error_len++;
-        //printf("[insert %ld] ycsb origin key_length < 20 \n", insert_error_len);
+        // printf("[insert %ld] ycsb origin key_length < 20 \n",
+        // insert_error_len);
         continue;
       }
 
@@ -148,11 +147,11 @@ void read_input_files(const char *path, task *t, uint8_t t_size) // t_sizeÊÇÏß³Ì
       // read key
       fgets(buffer, sizeof(buffer), fp);
       uint64_t hash_key = xxhash(buffer, KEY_LEN, HASH_SEED);
-      const uint32_t idx = hash_key% t_size;
+      const uint32_t idx = hash_key % t_size;
 
-      // check ¶ÔÓ¦Ïß³ÌÈÎÎñ¶ÓÁÐÊÇ·ñÒÑÂú
+      // check ï¿½ï¿½Ó¦ï¿½ß³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½
       if (t[idx].size == cursor[idx]) {
-        t[idx].entries = static_cast<op_entry *>(
+        t[idx].entries = reinterpret_cast<op_entry *>(
             realloc(t[idx].entries, sizeof(struct op_entry) * t[idx].size * 2));
         t[idx].size *= 2;
       }
@@ -161,8 +160,8 @@ void read_input_files(const char *path, task *t, uint8_t t_size) // t_sizeÊÇÏß³Ì
       t[idx].entries[cursor[idx]].op = READ;
       // copy key
       int str_len = strlen(buffer) - 1;
-      int offset = str_len - 20; // È¡Æ«ÒÆÁ¿
-      if(str_len < 20) {
+      int offset = str_len - 20;  // È¡Æ«ï¿½ï¿½ï¿½ï¿½
+      if (str_len < 20) {
         read_error_len++;
         // printf("[read %ld] ycsb origin key_length < 20 \n", read_error_len);
         continue;
@@ -174,26 +173,26 @@ void read_input_files(const char *path, task *t, uint8_t t_size) // t_sizeÊÇÏß³Ì
     }
   }
 
-  // Êä³ö½á¹û
-  std::cout<<"read error num:"<<read_error_len<<std::endl;
-  std::cout<<"insert error num:"<<insert_error_len<<std::endl;
-  std::cout<<"read total num:"<<read_total_num<<std::endl;
-  std::cout<<"insert total num:"<<insert_total_num<<std::endl;
+  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+  std::cout << "read error num:" << read_error_len << std::endl;
+  std::cout << "insert error num:" << insert_error_len << std::endl;
+  std::cout << "read total num:" << read_total_num << std::endl;
+  std::cout << "insert total num:" << insert_total_num << std::endl;
 
-  // ½«½á¹ûÊä³öµ½ÎÄ¼þ
+  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½
   std::ofstream file;
-  file.open("../src/out.txt",std::ios::app);
-  file<<"workload:"<<workload.c_str()<<std::endl;
-  file<<"thread_num:"<<std::to_string(thread_num)<<std::endl;
-  file<<"mode:"<<mode.c_str()<<std::endl;
-  file<<"ycsb read keylen error:"<<read_error_len<<", ycsb insert keylen error:"<<insert_error_len<<", read total num:"<<read_total_num<<", insert total num:"<<insert_total_num<<std::endl;
+  file.open("../src/out.txt", std::ios::app);
+  file << "workload:" << workload.c_str() << std::endl;
+  file << "thread_num:" << std::to_string(thread_num) << std::endl;
+  file << "mode:" << mode.c_str() << std::endl;
+  file << "ycsb read keylen error:" << read_error_len
+       << ", ycsb insert keylen error:" << insert_error_len
+       << ", read total num:" << read_total_num
+       << ", insert total num:" << insert_total_num << std::endl;
   file.close();
 
-
-
-
   for (int i = 0; i < t_size; i++) {
-    t[i].entries = static_cast<op_entry *>(
+    t[i].entries = reinterpret_cast<op_entry *>(
         realloc(t[i].entries, cursor[i] * sizeof(op_entry)));
     t[i].size = cursor[i];
   }
@@ -202,125 +201,137 @@ void read_input_files(const char *path, task *t, uint8_t t_size) // t_sizeÊÇÏß³Ì
   fclose(fp);
 }
 
-
-void *running(void *in)
-{
-  thread_input *input = (thread_input *) in;
+void *running(void *in) {
+  thread_input *input = (thread_input *)in;
   set_affinity(input->idx);
+  string_key *key =
+      reinterpret_cast<string_key *>(malloc(sizeof(string_key) + KEY_LEN));
+  const char *value = NULL;
+  key->length = KEY_LEN;
+
   for (int i = 0; i < input->t->size; i++) {
     if (input->t->entries[i].op == READ) {
-      //ÕâÀï²éÕÒ³ökeyºÍvalue¼´¿É
-      string_key*key=reinterpret_cast<string_key*>(alloca(sizeof(string_key)+KEY_LEN));
-      key->length=KEY_LEN;
-      memcpy(key->key,input->t->entries[i].key,sizeof(input->t->entries[i].key));
-      const char*value=input->index->Get(key);
-
+      //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò³ï¿½keyï¿½ï¿½valueï¿½ï¿½ï¿½ï¿½
+      memcpy(key->key, input->t->entries[i].key,
+             sizeof(input->t->entries[i].key));
+      value = input->index->Get(key, true);
     } else if (input->t->entries[i].op == INSERT) {
-      //µÃµ½keyµÄµØÖ·
-      PMEMoid  kptr;
-      PMEMoid  vptr;
-      Allocator::Allocate(&kptr,kCacheLineSize,KEY_LEN+sizeof (string_key),NULL,NULL);
-      string_key*key= static_cast<string_key*>(pmemobj_direct(kptr));
+      //ï¿½Ãµï¿½keyï¿½Äµï¿½Ö·
+      PMEMoid kptr;
+      PMEMoid vptr;
+      Allocator::Allocate(&kptr, kCacheLineSize, KEY_LEN + sizeof(string_key),
+                          NULL, NULL);
+      if (!OID_IS_NULL(kptr)) {
+        string_key *key = reinterpret_cast<string_key *>(pmemobj_direct(kptr));
 
-      Allocator::Allocate(&vptr,kCacheLineSize,VALUE_LEN,NULL,NULL);
-      char*value=static_cast<char *>(pmemobj_direct(vptr));
-      key->length=KEY_LEN;
-      memcpy(key->key,input->t->entries[i].key,sizeof(input->t->entries[i].key));
-      memcpy(value,input->t->entries[i].key,sizeof(input->t->entries[i].value));
-      //³Ö¾Ã»¯¼´¿É
-      Allocator::Persist(key,KEY_LEN+sizeof (string_key));
-      Allocator::Persist(value,VALUE_LEN);
-      //ÕâÀïÎÒ¾ÍÖ»²åÈëkeyºÍvalue¼´¿É,Ç¿×ª
-      input->index->Insert(key,value,true);
+        Allocator::Allocate(&vptr, kCacheLineSize, VALUE_LEN, NULL, NULL);
+        char *value = reinterpret_cast<char *>(pmemobj_direct(vptr));
+        key->length = KEY_LEN;
+        memcpy(key->key, input->t->entries[i].key,
+               sizeof(input->t->entries[i].key));
+        memcpy(value, input->t->entries[i].key,
+               sizeof(input->t->entries[i].value));
+        //ï¿½Ö¾Ã»ï¿½ï¿½ï¿½ï¿½ï¿½
+        Allocator::Persist(key, KEY_LEN + sizeof(string_key));
+        Allocator::Persist(value, VALUE_LEN);
+        //ï¿½ï¿½ï¿½ï¿½ï¿½Ò¾ï¿½Ö»ï¿½ï¿½ï¿½ï¿½keyï¿½ï¿½valueï¿½ï¿½ï¿½ï¿½,Ç¿×ª
+        input->index->Insert(key, value, true);
+      }
     }
   }
+  //std::cout << "t[" << input->idx << "]:" << find_fail << std::endl;
+  free(key);
 }
 
 
-int main(int argc, char *argv[])
-{
-  if(argc < 5){
-    std::cout<<"argc num must be set 3 numbers: \neg:ycsb_multi_thread_test workload_type thread_num default_path mode";
+
+int main(int argc, char *argv[]) {
+  if (argc < 5) {
+    std::cout << "argc num must be set 3 numbers: \neg:ycsb_multi_thread_test "
+                 "workload_type thread_num default_path mode";
   }
-  workload = argv[1];//¸ºÔØ
+  workload = argv[1];  //ï¿½ï¿½ï¿½ï¿½
   thread_num = atoi(argv[2]);
   default_path = argv[3];
   mode = argv[4];
 
   const uint32_t task_size = 16;
 
-  std::cout<<"start get data"<<std::endl;
+  std::cout << "start get data" << std::endl;
   task t[thread_num];
   for (int i = 0; i < thread_num; i++) {
     t[i].size = task_size;
     t[i].entries =
-        static_cast<op_entry *>(malloc(sizeof(op_entry) * task_size));
+        reinterpret_cast<op_entry *>(malloc(sizeof(op_entry) * task_size));
     memset(t[i].entries, 0, sizeof(struct op_entry) * task_size);
   }
 
-  // ³õÊ¼»¯ÈÎÎñ¶ÓÁÐ
+  // ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
   read_input_files(default_path, t, thread_num);
-   for(int i=0; i<thread_num; i++) {
-     std::cout<<"t["<<i<<"] size:"<<t[i].size<<std::endl;
-   }
-  std::cout<<"finish get data"<<std::endl;
+  for (int i = 0; i < thread_num; i++) {
+    std::cout << "t[" << i << "] size:" << t[i].size << std::endl;
+  }
+  std::cout << "finish get data" << std::endl;
 
-  std::cout<<"start create pool"<<std::endl;
-  //³õÊ¼»¯dash
-  Hash<string_key*>*index;
-  Allocator::Initialize(pool_name,pool_size);
-  //Ò»¸ö¶Î 64normal+2stash
-  //ÕâÀï¾Í²âÊÔ¶Ô²»¶Ô£¬¼ÙÉè1024¸ö¶Î
-  int seg_num=1024;
-  index= reinterpret_cast<Hash<string_key*>*>(
+  std::cout << "start create pool" << std::endl;
+  //ï¿½ï¿½Ê¼ï¿½ï¿½dash
+  Hash<string_key *> *index;
+  bool file_exist = false;
+  if (FileExists(pool_name)) file_exist = true;
+  Allocator::Initialize(pool_name, pool_size);
+  //Ò»ï¿½ï¿½ï¿½ï¿½ 64normal+2stash
+  //ï¿½ï¿½ï¿½ï¿½Í²ï¿½ï¿½Ô¶Ô²ï¿½ï¿½Ô£ï¿½ï¿½ï¿½ï¿½ï¿½1024ï¿½ï¿½ï¿½ï¿½
+  // int seg_num = 52428;  // 2ï¿½ï¿½19ï¿½Î·ï¿½
+  int seg_num = 16384 * 4;
+  index = reinterpret_cast<Hash<string_key *> *>(
       Allocator::GetRoot(sizeof(extendible::Finger_EH<string_key *>)));
-  new (index) extendible::Finger_EH<string_key*>(seg_num, Allocator::Get()->pm_pool_);
+  if (!file_exist) {
+    new (index) extendible::Finger_EH<string_key *>(seg_num,
+                                                    Allocator::Get()->pm_pool_);
+  } else {
+    new (index) extendible::Finger_EH<string_key *>();
+  }
 
-  std::cout<<"create pool success"<<std::endl;
+  std::cout << "create pool success" << std::endl;
 
-
-  // --------------------------- start multi logic here --------------------------- //
+  // --------------------------- start multi logic here
+  // --------------------------- //
   struct timeval start, end;
-  gettimeofday(&start, NULL); // Õâ¸öº¯Êý¿ÉÒÔ¾«È·µ½Î¢Ãë¼¶
+  gettimeofday(&start, NULL);
 
   pthread_t pt[thread_num];
   thread_input t_in[thread_num];
 
-  // ´´½¨¶àÏß³Ì£¬Ö´ÐÐÈÎÎñ
+  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß³Ì£ï¿½Ö´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
   for (int i = 0; i < thread_num; i++) {
-    t_in[i].index=index;
+    t_in[i].index = index;
     t_in[i].t = &t[i];
-    t_in[i].idx=i;
-    pthread_create(&pt[i], NULL, running, (void *) &t_in[i]);
+    t_in[i].idx = i;
+    pthread_create(&pt[i], NULL, running, (void *)&t_in[i]);
   }
 
-  // µÈ´ý×ÓÏß³Ì½áÊø
+  // ï¿½È´ï¿½ï¿½ï¿½ï¿½ß³Ì½ï¿½ï¿½ï¿½
   for (int i = 0; i < thread_num; i++) {
     pthread_join(pt[i], NULL);
   }
 
   gettimeofday(&end, NULL);
-  int timeuse = 1000000 * ( end.tv_sec - start.tv_sec ) + end.tv_usec - start.tv_usec;
-  std::cout<<"time:"<<timeuse<<"us"<<std::endl;
+  long int timeuse =
+      1000000 * (end.tv_sec - start.tv_sec) + end.tv_usec - start.tv_usec;
+  std::cout << "time:" << timeuse << "us" << std::endl;
 
   for (int i = 0; i < thread_num; i++) {
     free(t[i].entries);
   }
   printf("end");
 
-
-  // ½«ÓÃÊ±½á¹ûÊä³öµ½ÎÄ¼þ
+  // ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½
   std::ofstream file;
-  file.open("../src/out.txt",std::ios::app);
-  file<<"timeuse(us):"<<timeuse<<std::endl;
-  file<<"------------------------------------------------------------"<<std::endl;
+  file.open("../src/out.txt", std::ios::app);
+  file << "timeuse(us):" << timeuse << std::endl;
+  file << "------------------------------------------------------------"
+       << std::endl;
   file.close();
-
 
   return 0;
 }
-
-
-
-
-

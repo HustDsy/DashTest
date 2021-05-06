@@ -1,0 +1,289 @@
+workload:workloada
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):283707147
+------------------------------------------------------------
+workload:workloada
+thread_num:36
+mode:run
+ycsb read keylen error:1358, ycsb insert keylen error:1389, read total num:250001077, insert total num:249996176
+timeuse(us):137835785
+------------------------------------------------------------
+workload:workloada
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):281680097
+------------------------------------------------------------
+workload:workloada
+thread_num:32
+mode:run
+ycsb read keylen error:1358, ycsb insert keylen error:1389, read total num:250001077, insert total num:249996176
+timeuse(us):131053374
+------------------------------------------------------------
+workload:workloada
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):284135368
+------------------------------------------------------------
+workload:workloada
+thread_num:16
+mode:run
+ycsb read keylen error:1358, ycsb insert keylen error:1389, read total num:250001077, insert total num:249996176
+timeuse(us):130605108
+------------------------------------------------------------
+workload:workloada
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):280375312
+------------------------------------------------------------
+workload:workloada
+thread_num:8
+mode:run
+ycsb read keylen error:1358, ycsb insert keylen error:1389, read total num:250001077, insert total num:249996176
+timeuse(us):209211739
+------------------------------------------------------------
+workload:workloada
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):283532067
+------------------------------------------------------------
+workload:workloada
+thread_num:4
+mode:run
+ycsb read keylen error:1358, ycsb insert keylen error:1389, read total num:250001077, insert total num:249996176
+timeuse(us):357556728
+------------------------------------------------------------
+workload:workloada
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):283924821
+------------------------------------------------------------
+workload:workloada
+thread_num:1
+mode:run
+ycsb read keylen error:1358, ycsb insert keylen error:1389, read total num:250001077, insert total num:249996176
+timeuse(us):1227472674
+------------------------------------------------------------
+workload:workloadb
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):282679903
+------------------------------------------------------------
+workload:workloadb
+thread_num:36
+mode:run
+ycsb read keylen error:2660, ycsb insert keylen error:137, read total num:474992569, insert total num:25004634
+timeuse(us):22163789
+------------------------------------------------------------
+workload:workloadb
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):283436034
+------------------------------------------------------------
+workload:workloadb
+thread_num:32
+mode:run
+ycsb read keylen error:2660, ycsb insert keylen error:137, read total num:474992569, insert total num:25004634
+timeuse(us):22767365
+------------------------------------------------------------
+workload:workloadb
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):283218400
+------------------------------------------------------------
+workload:workloadb
+thread_num:16
+mode:run
+ycsb read keylen error:2660, ycsb insert keylen error:137, read total num:474992569, insert total num:25004634
+timeuse(us):31346722
+------------------------------------------------------------
+workload:workloadb
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):281370454
+------------------------------------------------------------
+workload:workloadb
+thread_num:8
+mode:run
+ycsb read keylen error:2660, ycsb insert keylen error:137, read total num:474992569, insert total num:25004634
+timeuse(us):53070830
+------------------------------------------------------------
+workload:workloadb
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):282595179
+------------------------------------------------------------
+workload:workloadb
+thread_num:4
+mode:run
+ycsb read keylen error:2660, ycsb insert keylen error:137, read total num:474992569, insert total num:25004634
+timeuse(us):95150543
+------------------------------------------------------------
+workload:workloadb
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):281403060
+------------------------------------------------------------
+workload:workloadb
+thread_num:1
+mode:run
+ycsb read keylen error:2660, ycsb insert keylen error:137, read total num:474992569, insert total num:25004634
+timeuse(us):366855012
+------------------------------------------------------------
+workload:workloadc
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):282164182
+------------------------------------------------------------
+workload:workloadc
+thread_num:36
+mode:run
+ycsb read keylen error:2751, ycsb insert keylen error:0, read total num:499997249, insert total num:0
+timeuse(us):9648109
+------------------------------------------------------------
+workload:workloadc
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):283446121
+------------------------------------------------------------
+workload:workloadc
+thread_num:32
+mode:run
+ycsb read keylen error:2751, ycsb insert keylen error:0, read total num:499997249, insert total num:0
+timeuse(us):10747501
+------------------------------------------------------------
+workload:workloadc
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):283258167
+------------------------------------------------------------
+workload:workloadc
+thread_num:16
+mode:run
+ycsb read keylen error:2751, ycsb insert keylen error:0, read total num:499997249, insert total num:0
+timeuse(us):16514728
+------------------------------------------------------------
+workload:workloadc
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):284267920
+------------------------------------------------------------
+workload:workloadc
+thread_num:8
+mode:run
+ycsb read keylen error:2751, ycsb insert keylen error:0, read total num:499997249, insert total num:0
+timeuse(us):31780998
+------------------------------------------------------------
+workload:workloadc
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):282697067
+------------------------------------------------------------
+workload:workloadc
+thread_num:4
+mode:run
+ycsb read keylen error:2751, ycsb insert keylen error:0, read total num:499997249, insert total num:0
+timeuse(us):57061496
+------------------------------------------------------------
+workload:workloadc
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):283217564
+------------------------------------------------------------
+workload:workloadc
+thread_num:1
+mode:run
+ycsb read keylen error:2751, ycsb insert keylen error:0, read total num:499997249, insert total num:0
+timeuse(us):237253060
+------------------------------------------------------------
+workload:workloadd
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):282786696
+------------------------------------------------------------
+workload:workloadd
+thread_num:36
+mode:run
+ycsb read keylen error:5527, ycsb insert keylen error:300, read total num:474996215, insert total num:24997958
+timeuse(us):21775815
+------------------------------------------------------------
+workload:workloadd
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):284864982
+------------------------------------------------------------
+workload:workloadd
+thread_num:32
+mode:run
+ycsb read keylen error:5527, ycsb insert keylen error:300, read total num:474996215, insert total num:24997958
+timeuse(us):22425957
+------------------------------------------------------------
+workload:workloadd
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):284345011
+------------------------------------------------------------
+workload:workloadd
+thread_num:16
+mode:run
+ycsb read keylen error:5527, ycsb insert keylen error:300, read total num:474996215, insert total num:24997958
+timeuse(us):30785905
+------------------------------------------------------------
+workload:workloadd
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):283556137
+------------------------------------------------------------
+workload:workloadd
+thread_num:8
+mode:run
+ycsb read keylen error:5527, ycsb insert keylen error:300, read total num:474996215, insert total num:24997958
+timeuse(us):52808731
+------------------------------------------------------------
+workload:workloadd
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):282323628
+------------------------------------------------------------
+workload:workloadd
+thread_num:4
+mode:run
+ycsb read keylen error:5527, ycsb insert keylen error:300, read total num:474996215, insert total num:24997958
+timeuse(us):96345041
+------------------------------------------------------------
+workload:workloadd
+thread_num:36
+mode:load
+ycsb read keylen error:0, ycsb insert keylen error:5467, read total num:0, insert total num:499994533
+timeuse(us):283570513
+------------------------------------------------------------
+workload:workloadd
+thread_num:1
+mode:run
+ycsb read keylen error:5527, ycsb insert keylen error:300, read total num:474996215, insert total num:24997958
+timeuse(us):379034725
+------------------------------------------------------------
+

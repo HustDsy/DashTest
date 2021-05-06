@@ -281,7 +281,7 @@ static size_t (*hash_funcs[4])(const void *key, size_t len, size_t seed) = {
     standard, murmur2, jenkins, xxhash};
 
 inline size_t h(const void *key, size_t len, size_t seed = 0xc70697UL) {
-  return hash_funcs[0](key, len, seed);
+  return hash_funcs[3](key, len, seed);
 }
 
 inline size_t h2(const void *key, size_t len, size_t seed = 0xc70697UL) {
